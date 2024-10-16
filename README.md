@@ -24,6 +24,12 @@
       * [Example](#example-4)
     * [Looping HTTP Calls](#looping-http-calls)
       * [Example](#example-5)
+    * [Feeders](#feeders)
+      * [CSV Feeder](#csv-feeder)
+        * [Example](#example-6)
+      * [JSON Feeder](#json-feeder)
+        * [Example](#example-7)
+      * [Basic Custom Feeder](#basic-custom-feeder)
 <!-- TOC -->
 
 ## Notes
@@ -261,3 +267,12 @@ private static ChainBuilder getSpecificGame =
 
 #### JSON Feeder
 
+Very similar to CSV Feeder
+
+##### Example
+
+```java
+private static FeederBuilder.FileBased<Object> jsonFeeder = jsonFile("data/gameJsonFile.json").circular();
+```
+
+#### Basic Custom Feeder
