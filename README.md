@@ -275,4 +275,58 @@ Very similar to CSV Feeder
 private static FeederBuilder.FileBased<Object> jsonFeeder = jsonFile("data/gameJsonFile.json").circular();
 ```
 
-#### Basic Custom Feeder
+#### Custom Feeder
+
+We can generate data to feed to our requests using normal Java code, such as random numbers.
+
+##### Example 
+
+```java
+// Create a feeder of random video games
+private static Iterator<Map<String, Object>> customFeeder =
+        Stream.generate((Supplier<Map<String, Object>>) () -> {
+            Random rand = new Random();
+            int gameId = rand.nextInt(10 - 1 + 1) + 1;
+
+            String gameName = RandomStringUtils.randomAlphabetic(5) + "-gameName";
+            String releaseDate = randomDate().toString();
+            int reviewScore = rand.nextInt(100);
+            String category = RandomStringUtils.randomAlphabetic(5) + "-category";
+            String rating = RandomStringUtils.randomAlphabetic(4) + "-rating";
+
+                    HashMap<String, Object> hmap = new HashMap<String, Object>();
+                    hmap.put("gameId", gameId);
+                    hmap.put("gameName", gameName);
+                    hmap.put("releaseDate", releaseDate);
+                    hmap.put("reviewScore", reviewScore);
+                    hmap.put("category", category);
+                    hmap.put("rating", rating);
+                    return hmap;
+        }
+        ).iterator();
+
+private static ChainBuilder createNewGame =
+        feed(customFeeder)
+                .exec(http("Create New Game - #{gameName}")
+                        .post("/videogame")
+                        .header("Authorization", "Bearer #{jwtToken}")
+                        .body(ElFileBody("bodies/newGameTemplate.json")).asJson() // Convert the data from the feeder to JSON using a template
+                        .check(bodyString().saveAs("responseBody")))
+                .exec(session -> {
+                  System.out.println(session.getString("responseBody"));
+                  return session;
+                });
+```
+
+> Here our JSON template comes from the file `bodies/newGameTemplate.json`, which you can find below:
+
+```json
+{
+  "id": #{gameId},
+  "name": "#{gameName}",
+  "releaseDate": "#{releaseDate}",
+  "reviewScore": #{reviewScore},
+  "category": "#{category}",
+  "rating": "#{rating}"
+}
+```
