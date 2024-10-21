@@ -330,3 +330,35 @@ private static ChainBuilder createNewGame =
   "rating": "#{rating}"
 }
 ```
+
+### Load Simulation
+
+_In real-world situations, we would use data about the SUT's past usage to build load profiles._
+
+#### Open vs Closed Workload Models
+
+When it comes to load models, systems behave in 2 different ways:
+
+- **Open** systems, where you control the arrival rate of users
+- **Closed** systems, where you control the concurrent number of users
+
+#### Basic Load Simulation
+
+We use the `.atOnceUsers()` method to inject a given number of concurrent users, and combine the use of `.rampUsers()` and `.during()` to inject users over time.
+
+##### Example
+
+```java
+setUp(
+        scn.injectOpen(
+                nothingFor(5), // Do nothing for 5 seconds
+                atOnceUsers(5), // Add 5 users all at once
+                rampUsers(10).during(20) // Add another 10 users over 20 seconds
+        ).protocols(httpProtocol)
+);
+```
+
+
+
+
+
