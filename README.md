@@ -333,6 +333,8 @@ private static ChainBuilder createNewGame =
 
 ### Load Simulation
 
+[Documentation](https://docs.gatling.io/reference/script/core/injection/)
+
 _In real-world situations, we would use data about the SUT's past usage to build load profiles._
 
 #### Open vs Closed Workload Models
@@ -342,23 +344,68 @@ When it comes to load models, systems behave in 2 different ways:
 - **Open** systems, where you control the arrival rate of users
 - **Closed** systems, where you control the concurrent number of users
 
-#### Basic Load Simulation
+#### Basic Open Load Simulation
 
-We use the `.atOnceUsers()` method to inject a given number of concurrent users, and combine the use of `.rampUsers()` and `.during()` to inject users over time.
 
 ##### Example
 
 ```java
 setUp(
         scn.injectOpen(
-                nothingFor(5), // Do nothing for 5 seconds
-                atOnceUsers(5), // Add 5 users all at once
-                rampUsers(10).during(20) // Add another 10 users over 20 seconds
-        ).protocols(httpProtocol)
-);
+        nothingFor(4), // 1
+        atOnceUsers(10), // 2
+        rampUsers(10).during(5), // 3
+        constantUsersPerSec(20).during(15), // 4
+        constantUsersPerSec(20).during(15).randomized(), // 5
+        rampUsersPerSec(10).to(20).during(10), // 6
+        rampUsersPerSec(10).to(20).during(10).randomized(), // 7
+        stressPeakUsers(1000).during(20) // 8
+          ).protocols(httpProtocol)
+        );
 ```
 
+**The building blocks for open model profile injection are**:
 
+- `nothingFor(duration)`: Pause for a given duration.
+- `atOnceUsers(nbUsers)`: Injects a given number of users at once.
+- `rampUsers(nbUsers)`.during(duration): Injects a given number of users distributed evenly on a time window of a given duration.
+- `constantUsersPerSec(rate)`.during(duration): Injects users at a constant rate, defined in users per second, during a given duration. Users will be injected at regular intervals.
+- `constantUsersPerSec(rate)`.during(duration).randomized: Injects users at a constant rate, defined in users per second, during a given duration. Users will be injected at randomized intervals.
+- `rampUsersPerSec(rate1)`.to(rate2).during(duration): Injects users from starting rate to target rate, defined in users per second, during a given duration. Users will be injected at regular intervals.
+- `rampUsersPerSec(rate1)`.to(rate2).during(duration).randomized: Injects users from starting rate to target rate, defined in users per second, during a given duration. Users will be injected at randomized intervals.
+- `stressPeakUsers(nbUsers)`.during(duration): Injects a given number of users following a smooth approximation of the heaviside step function stretched to a given duration.
 
+#### Fixed Duration Load Simulation
 
+with `maxDuration` we can force your run to terminate based on a duration limit, even if some virtual users are still running.
 
+##### Example
+
+```java
+private ScenarioBuilder scn = scenario("Video game db - Section 7 code")
+        .forever().on(
+        exec(getAllVideoGames)
+        .pause(5)
+        .exec(getSpecificGame)
+        .pause(5)
+        .exec(getAllVideoGames)
+        );
+
+{
+    setUp(
+            scn.injectOpen(
+                    nothingFor(5), // Do nothing for 5 seconds
+                    atOnceUsers(10), // Add 5 users all at once
+                    rampUsers(20).during(30) // Add another 10 users over 20 seconds
+            ).protocols(httpProtocol)
+    ).maxDuration(60);
+}
+```
+
+### Excecuting Scripts from the Command Line using Maven
+
+We can run a specific script like so:
+
+```shell
+mvn gatling:test -D"gatling.simulationClass=videogamedb.simulation.VideoGameDbSimulations"
+```
