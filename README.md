@@ -409,3 +409,39 @@ We can run a specific script like so:
 ```shell
 mvn gatling:test -D"gatling.simulationClass=videogamedb.simulation.VideoGameDbSimulations"
 ```
+
+### Runtime Parameters in Gatling Scripts
+
+We can use system properties to provide Gatling scripts with parameters at runtime.
+
+#### Example 
+
+```java
+private static final int USER_COUNT = Integer.parseInt(System.getProperty("USERS", "5")); // Store the system property USERS in a variable, and have it default to 5
+private static final int RAMP_DURATION = Integer.parseInt(System.getProperty("RAMP_DURATION","10")); // Store the system property RAMP_DURATION in a variable, and have it default to 10
+private static final int TEST_DURATION = Integer.parseInt(System.getProperty("TEST_DURATION","20")); // Store the system property TEST_DURATION in a variable, and have it default to 20
+
+@Override
+public void before(){
+    System.out.printf("Running test with %d users%n", USER_COUNT);
+    System.out.printf("Ramping users over %d seconds%n", RAMP_DURATION);
+    System.out.printf("Total test duration: %d seconds", TEST_DURATION);
+}
+```
+
+Our setup changes to 
+
+```java
+setUp(
+        scn.injectOpen(
+                nothingFor(5), // Do nothing for 5 seconds
+                rampUsers(USER_COUNT).during(RAMP_DURATION)
+        ).protocols(httpProtocol)
+).maxDuration(TEST_DURATION);
+```
+
+And we can now provide the parameters from our command like so:
+
+```shell
+mvn gatling:test -D"gatling.simulationClass=videogamedb.simulation.VideoGameDbSimulations" -DUSERS=10
+```
